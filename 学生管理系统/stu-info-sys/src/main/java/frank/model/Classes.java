@@ -5,14 +5,13 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-
 /**
  * 班级表
  */
 @Getter
 @Setter
 @ToString
-public class Classes {
+public class Classes extends DictionaryTag{
     
     private Integer id;
 
@@ -40,4 +39,6 @@ public class Classes {
      * 创建时间
      */
     private Date createTime;
+
+
 }
