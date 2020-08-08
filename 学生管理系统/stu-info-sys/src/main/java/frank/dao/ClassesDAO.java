@@ -16,7 +16,6 @@ import java.util.List;
  * @author: matilda
  * @create: 2020-08-03 19:56
  **/
-
 public class ClassesDAO {
 
     public static List<Classes> queryAsDict() {

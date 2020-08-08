@@ -24,6 +24,7 @@ public abstract class AbstractBaseServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        //只需要在doPost中完成一段逻辑，就可以完成所有doGet和doPost的请求
         doPost(req,resp);
     }
 
@@ -46,8 +47,12 @@ public abstract class AbstractBaseServlet extends HttpServlet {
         //get会怎样？在URL中，post会怎样？在请求体，格式为K1=v1&k2=v2
         //表单不使用默认的方式时，比如手写前端代码，发送ajax请求，请求格式为application/json: 请求体，数据为json字符串
         //HttpServletRequest对象.getInputStream()通过输入流获取，请求体都可以获取到，怎么解析依赖代码实现
+        //找到要查找的key
+        //从数据库中查找key对应的value值，放到tags中，如果在查找数据库时出现了异常，应该要进行异常的处理
         try {
+            //所有的子类都需要重写这个方法，且如果产生异常，也方便处理这个异常
             Object o = process(req,resp);
+            //执行jdbc成功之后才设置的这些选项
             r.setSuccess(true);
             r.setCode("COK200");
             r.setMessage("操作成功");
@@ -55,15 +60,19 @@ public abstract class AbstractBaseServlet extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
             r.setCode("ERR500");
-            r.setMessage(e.getMessage());
-            StringWriter sw = new StringWriter();
+            r.setMessage(e.getMessage());//将捕获到的异常设置到message中去
+            //获取异常的堆栈信息
+            StringWriter sw = new StringWriter();//相关的堆栈信息保存在sw中
+            //从输入流中拿到信息放入sw中
             PrintWriter writer = new PrintWriter(sw);
+            //将堆栈信息放入输出流writer中
             e.printStackTrace(writer);
             String stackTrace = sw.toString();
-            System.err.println(stackTrace);
-            r.setStackTrace(stackTrace);
+            System.err.println(stackTrace);//先将堆栈信息打印到控制台
+            r.setStackTrace(stackTrace);//将堆栈信息放入响应信息中
         }
 
+        //将response转换成一个json字符串打印在前端界面上
         pw.println(JSONUtil.write(r));
         pw.flush();
     }

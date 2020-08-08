@@ -57,6 +57,7 @@ public class StudentDAO {
                 student.setIdCard(rs.getString("id_card"));
                 student.setStudentEmail(rs.getString("student_email"));
                 student.setClassesId(rs.getInt("classes_id"));
+                //new Date()的类型的util的，但是从数据库中拿到的时间是sql的，所以需要使用.getTime()方法将其转换成long类型
                 student.setCreateTime(new Date(rs.getTimestamp("create_time").getTime()));
                 Classes classes = new Classes();
                 student.setClasses(classes);

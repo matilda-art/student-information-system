@@ -40,11 +40,12 @@ public class LoginFilter implements Filter {
         HttpSession session = req.getSession(false);//没有session的时候，返回null
         if (session == null){
             //首页重定向到登录页面，如果后端接口，返回错误的json数据
-            req.setCharacterEncoding("UTF-8");
-            res.setCharacterEncoding("UTF-8");
+            //req.setCharacterEncoding("UTF-8");
+            //res.setCharacterEncoding("UTF-8");
             //首页重定向到登录页面
             if ("/public/page/main.html".equals(url)){
-                res.setContentType("text/html");
+                res.setContentType("text/html; charset=UTF-8");
+                //重定向
                 String schema = req.getScheme();//http
                 String host = req.getServerName();//服务器ip
                 int port = req.getServerPort();//端口号
@@ -59,6 +60,7 @@ public class LoginFilter implements Filter {
                        && !url.startsWith("/static/") && !"/user/login".equals(url))){
                 res.setContentType("application/json");
                 PrintWriter pw = res.getWriter();
+
                 Response r = new Response();
                 r.setCode("ERR401");
                 r.setMessage("不允许访问");
