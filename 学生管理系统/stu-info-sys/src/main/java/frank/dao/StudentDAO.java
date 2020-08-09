@@ -2,8 +2,10 @@ package frank.dao;
 
 import frank.model.Classes;
 import frank.model.DictionaryTag;
+import frank.model.Page;
 import frank.model.Student;
 import frank.util.DBUtil;
+import frank.util.ThreadLocalHolder;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -19,17 +21,17 @@ import java.util.List;
  * @create: 2020-08-02 10:18
  **/
 public class StudentDAO {
-    public static List<Student> query() {
+    public static List<Student> query(Page p) {
         Connection c = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
         List<Student> list = new ArrayList<>();
 
-        try {
-            //1、获取数据库连接
+        /*try {
+            //1.获取数据库连接
             c = DBUtil.getConnection();
-            //关联班级表和学生表，查询需要的数据（学生的数据和班级的数据）
-            String sql  = "select s.id," +
+            //复制粘贴进来的代码：ctrl+f替换所有换行符，在需要空格的地方加上空格或tab缩进，设置占位符
+            StringBuilder sql = new StringBuilder("select s.id," +
                     "       s.student_name," +
                     "       s.student_no," +
                     "       s.id_card," +
@@ -40,12 +42,93 @@ public class StudentDAO {
                     "       c.classes_name," +
                     "       c.classes_graduate_year," +
                     "       c.classes_major," +
-                    "       c.classes_desc," +
-                    "       c.create_time" +
+                    "       c.classes_desc" +
                     "   from student s" +
-                    "         join classes c on s.classes_id = c.id";
-            //2、创建操作命令对象
-            ps = c.prepareStatement(sql);
+                    "         join classes c on s.classes_id = c.id");//关联班级表和学生表，查询需要的数据（学生的数据和班级的数据）
+            if(p.getSearchText() != null && p.getSearchText().trim().length()>0){
+                sql.append("    where s.student_name like ?");//模糊查询，只要包含就行
+            }
+            if(p.getSortOrder() != null && p.getSortOrder().trim().length()>0){
+                //不能使用占位符替换的方式实现：字符串替换会带上'', order by xxx 'asc'
+                //这里拼字符串的方式，存在sql注入的风险，一般会校验一下，我们这省略了
+                sql.append("    order by s.create_time "+p.getSortOrder());
+            }
+            //1.获取查询总数量：以上sql可以复用，子查询的方式实现
+            StringBuilder countSQL = new StringBuilder("select count(0) count from (");
+            countSQL.append(sql);
+            countSQL.append(")tmp");
+            ps = c.prepareStatement(countSQL.toString());
+            if(p.getSearchText() != null && p.getSearchText().trim().length()>0){
+                ps.setString(1, "%"+p.getSearchText()+"%");
+            }
+            rs = ps.executeQuery();
+            while(rs.next()){
+                int count = rs.getInt("count");
+                ThreadLocalHolder.getTOTAL().set(count);//设置total变量到当前线程中的ThreadLocalMap数据结构中保存
+            }
+
+            //2.获取分页的数据
+            sql.append("    limit ?,?");
+            //2.创建操作命令对象
+            ps = c.prepareStatement(sql.toString());
+            int index = 1;
+            if(p.getSearchText() != null && p.getSearchText().trim().length()>0){
+                ps.setString(index++, "%"+p.getSearchText()+"%");
+            }
+            ps.setInt(index++, (p.getPageNumber()-1)*p.getPageSize());//设置索引=上一页页码*每页的数量
+            ps.setInt(index++, p.getPageSize());*/
+
+        try {
+            //1.获取数据库连接
+            c = DBUtil.getConnection();
+            //复制粘贴进来的代码：ctrl+f替换所有换行符，在需要空格的地方加上空格或tab缩进，设置占位符
+            StringBuilder sql = new StringBuilder("select s.id," +
+                    "       s.student_name," +
+                    "       s.student_no," +
+                    "       s.id_card," +
+                    "       s.student_email," +
+                    "       s.classes_id," +
+                    "       s.create_time," +
+                    "       c.id cid," +
+                    "       c.classes_name," +
+                    "       c.classes_graduate_year," +
+                    "       c.classes_major," +
+                    "       c.classes_desc" +
+                    "   from student s" +
+                    "         join classes c on s.classes_id = c.id");//关联班级表和学生表，查询需要的数据（学生的数据和班级的数据）
+            if(p.getSearchText() != null && p.getSearchText().trim().length() > 0){
+                sql.append("    where s.student_name like ?");//模糊查询，只要包含就行
+            }
+            if(p.getSortOrder() != null && p.getSortOrder().trim().length() > 0){
+                //不能使用占位符替换的方式实现：字符串替换会带上'', order by xxx 'asc'
+                //这里拼字符串的方式，存在sql注入的风险，一般会校验一下，我们这省略了
+                sql.append("    order by s.create_time " + p.getSortOrder());
+            }
+            //1.获取查询总数量：以上sql可以复用，子查询的方式实现
+            StringBuilder countSQL = new StringBuilder("select count(0) count from (");
+            countSQL.append(sql);
+            countSQL.append(")tmp");
+            ps = c.prepareStatement(countSQL.toString());
+            if(p.getSearchText() != null && p.getSearchText().trim().length() > 0){
+                ps.setString(1, "%" + p.getSearchText() + "%");
+            }
+            rs = ps.executeQuery();
+            while(rs.next()){
+                int count = rs.getInt("count");
+                ThreadLocalHolder.getTOTAL().set(count);//设置total变量到当前线程中的ThreadLocalMap数据结构中保存
+            }
+
+            //2.获取分页的数据
+            sql.append("    limit ?,?");
+            //2.创建操作命令对象
+            ps = c.prepareStatement(sql.toString());
+            int index = 1;
+            if(p.getSearchText() != null && p.getSearchText().trim().length() > 0){
+                ps.setString(index++, "%" + p.getSearchText() + "%");
+            }
+            ps.setInt(index++, (p.getPageNumber() - 1) * p.getPageSize());//设置索引=上一页页码*每页的数量
+            ps.setInt(index++, p.getPageSize());
+
             //3、执行sql语句
             rs = ps.executeQuery();
             //4、处理查询结果集

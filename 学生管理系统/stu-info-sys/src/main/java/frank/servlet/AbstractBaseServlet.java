@@ -4,6 +4,7 @@ import frank.dao.DictionaryTagDAO;
 import frank.model.DictionaryTag;
 import frank.model.Response;
 import frank.util.JSONUtil;
+import frank.util.ThreadLocalHolder;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -35,8 +36,8 @@ public abstract class AbstractBaseServlet extends HttpServlet {
         //后面的接口的，Servlet中都是类似的写法，包括编码，数据类型，统一返回的数据格式
         //考虑几个问题：1、如果出现异常应该怎么处理？
         //2、怎么封装代码进行统一设置编码，返回的数据格式，统一的处理异常更好？
-        req.setCharacterEncoding("UTF-8");
-        resp.setCharacterEncoding("UTF-8");
+        req.setCharacterEncoding("utf-8");
+        resp.setCharacterEncoding("utf-8");
         resp.setContentType("application/json");
 
         PrintWriter pw = resp.getWriter();
@@ -54,11 +55,11 @@ public abstract class AbstractBaseServlet extends HttpServlet {
             Object o = process(req,resp);
             //执行jdbc成功之后才设置的这些选项
             r.setSuccess(true);
-            r.setCode("COK200");
+            r.setCode("200");
+            r.setTotal(ThreadLocalHolder.getTOTAL().get());//不管是否分页接口，都获取当前线程中的total变量
             r.setMessage("操作成功");
             r.setData(o);
         } catch (Exception e) {
-            e.printStackTrace();
             r.setCode("ERR500");
             r.setMessage(e.getMessage());//将捕获到的异常设置到message中去
             //获取异常的堆栈信息
@@ -70,6 +71,8 @@ public abstract class AbstractBaseServlet extends HttpServlet {
             String stackTrace = sw.toString();
             System.err.println(stackTrace);//先将堆栈信息打印到控制台
             r.setStackTrace(stackTrace);//将堆栈信息放入响应信息中
+        }finally {
+            ThreadLocalHolder.getTOTAL().remove();//在线程结束前，一定要记得删除变量。如果不删除，可能存在内存泄漏的问题
         }
 
         //将response转换成一个json字符串打印在前端界面上
